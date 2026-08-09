@@ -109,19 +109,47 @@ Claim: call volume is bounded and prompts carry no embedding payload.
 
 ## e-005-test-suites
 
-Claim: Python 100 passed / 1 skipped; Playwright production 22 passed.
+Claim: Python 116 passed / 1 skipped; Playwright production 26 passed.
 
-- Date: 2026-08-07
-- Command: `python -m pytest tests -q` (from `services/video-clipper`)
+**Superseded numbers:** this entry previously recorded 100 / 22, from before phases 1-2
+closed. Counts below are current as of 2026-08-09.
+
+- Date: 2026-08-09
+- **Interpreter matters — record it.** Runs before 2026-08-09 used
+  `video-clipper-service-/.venv`, a venv belonging to the *separate* pre-merge repo that
+  happened to have the dependencies installed. `services/video-clipper/.venv` — the one
+  the README tells you to create — did not exist, so the documented install path was
+  unexercised. It has now been built from scratch and every number below comes from it.
+- Command (from `services/video-clipper`, README Install followed verbatim):
+  ```
+  python -m venv .venv
+  .\.venv\Scripts\python -m pip install -r requirements.txt
+  .\.venv\Scripts\python -m afterplay.cli doctor
+  ```
+  ```
+  ffmpeg               C:\ProgramData\chocolateyinfmpeg.EXE
+  encoder              h264_qsv
+  cv2                  5.0.0
+  numpy                2.4.6
+  yt_dlp               ok
+  faster_whisper       missing          <- optional, correctly reported
+  openai_memory_preflight skipped: OPENAI_API_KEY unset
+  ```
+- Command: `.\.venv\Scripts\python -m pytest tests -q`
 - Captured output:
   ```
-  100 passed, 1 skipped, 1 warning in 889.67s (0:14:49)
+  116 passed, 1 skipped, 1 warning in 235.11s (0:03:55)
   ```
+  The one skip is `tests	est_units.py:343: saved fixture not present`.
 - Command: `npx playwright test --config playwright.production.config.ts`
 - Captured output:
   ```
-  22 passed (3.3m)
+  26 passed (1.2m)
   ```
+- **The suite passes without the optional dependencies.** This fresh venv has no
+  `faster-whisper`, no `anthropic`, no `mcp` — the same 116/1. Their absence is a supported
+  state covered through each degradation path, which is why `tests/conftest.py`
+  deliberately does not guard them.
 - **Flake note:** running both suites concurrently produced
   `1 failed … accessibility.spec.ts:14:7` with `Test timeout of 30000ms exceeded`. The page
   snapshot showed a correctly rendered page — this is axe-core CPU contention, **not** a

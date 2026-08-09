@@ -19,8 +19,18 @@ The decision phase is genuinely cheap — resolve + understand was **43s of that
 the remaining time is frame decoding and encoding. See [reframe performance](../../docs/prd/PRD.md)
 (gap G16) for the known bottleneck and the planned fix.
 
-**100 tests pass, 1 skipped** (unit + hermetic integration; no network, model weights or
-GPU required). Reproduce with `python -m pytest tests -q`.
+**116 tests pass, 1 skipped** (unit + hermetic integration; no network, model weights or
+GPU required). Reproduce **with the venv interpreter**, from `services/video-clipper`:
+
+```powershell
+.\.venv\Scripts\python -m pytest tests -q      # Windows
+.venv/bin/python -m pytest tests -q             # Linux / macOS
+```
+
+A bare `python -m pytest` picks up whatever interpreter is on `PATH`. If that one lacks
+`requirements.txt`, the render/crop/QC tests fail with `ModuleNotFoundError: No module
+named 'cv2'` and it looks like the pipeline is broken. `tests/conftest.py` catches this and
+names the missing packages, but running the right interpreter avoids it entirely.
 
 ---
 
