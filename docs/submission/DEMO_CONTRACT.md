@@ -10,7 +10,7 @@ Open the Afterplay check-in beside the prepared OBS scene.
 
 Say the problem plainly: a streamer cannot play, perform, follow every chat thread, remember the community, run a deliberate growth experiment, and package the result at the same time.
 
-Show the truth strip: **live gameplay · simulated chat · live AI cohost**.
+Show the truth strip: **live gameplay · live audience · live AI cohost**.
 
 ## 0:30-1:05 — Give Riff a job
 
@@ -22,20 +22,24 @@ Show one Afterplay-proposed stream experiment. The creator accepts or edits it, 
 
 Start the live session. This must feel like a check-in, not dashboard administration.
 
+Open the Audience Room in the companion and let the physical audience scan the QR. State plainly that it is a temporary room, not Twitch chat.
+
 ## 1:05-3:15 — The live proof
 
 Switch attention to the OBS-composed stream:
 
-- live Roblox obby gameplay;
+- live selected-game gameplay;
 - small facecam;
-- normal scrolling simulated chat;
+- real audience comments arriving from phones;
 - Riff audible to the creator and audience;
-- sparse Riff captions, with no animated avatar and no special chat callouts.
+- sparse Riff captions, with no animated avatar;
+- at most one exact selected audience comment at the top right.
 
-The scripted-but-reactive sequence should create two genuine AI moments:
+The audience interaction should create one clear live proof:
 
-1. A viewer roasts the creator after a mistake. Riff recognizes the setup and pushes the creator to answer.
-2. Several viewers ask for the same thing in different language. Riff synthesizes the request and challenges the creator to respond.
+1. A viewer sends a comment worth interrupting for, or several viewers independently converge on one request.
+2. Riff spotlights the exact comment, synthesizes the grounded consensus, or deliberately stays silent.
+3. For a spotlight, the exact source comment and chosen name appear in OBS while Riff responds aloud.
 
 At least one moment must show experiment relevance, and one visible highlight marker must appear. If live AI fails, show the failure; do not silently switch modes.
 
@@ -58,10 +62,12 @@ Close on:
 
 ## Demo truth rules
 
-- Simulated chat is labelled at the point of use.
+- The Audience Room is labelled live; if the fallback scripted chat is used instead, it is labelled simulated at the point of use.
 - Live versus deterministic Riff mode is visible.
-- Roblox, facecam, microphone, audio routing, and final composition happen in OBS and are not represented as Afterplay-owned streaming infrastructure.
-- The desktop companion sends periodic selected-window snapshots as Realtime image context. This is not continuous video, and actual Roblox interpretation remains a manual demo claim.
+- The game, facecam, microphone, audio routing, and final composition happen in OBS and are not represented as Afterplay-owned streaming infrastructure.
+- The desktop companion sends periodic selected-window snapshots as Realtime image context. This is not continuous video, and actual game interpretation remains a manual demo claim.
 - Sample memories or historical context are labelled if seeded.
 - No claim implies real platform ingestion, public posting, proven creator growth, or measured burnout reduction.
 - The offline deterministic path exists for rehearsal but is never passed off as the live AI path.
+- Public phone ingress and live provider judgment must be rehearsed on the demo network; browser automation does not prove either.
+- Audience-selected interventions are not yet claimed as automatically persisted debrief evidence.

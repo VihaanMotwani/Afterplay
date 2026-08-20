@@ -6,7 +6,7 @@ Afterplay is an autonomous growth team for gaming creators. It studies creator h
 
 This repository is a working end-to-end prototype for the Garena AI Build Challenge 2026. The clipper is part of the team: it can backfill creator memory, find callback/payoff moments, render shorts, and hand Studio a manifest with cited evidence. The central object remains a growth experiment and the north star is returning audience behavior.
 
-Riff extends that loop into the live show. The audible AI cohost reads chat, receives bounded game snapshots from the desktop companion, and turns source-bearing moments into highlights, memory, and experiment evidence.
+Riff extends that loop into the live show. The audible AI cohost can read a real temporary Audience Room or a disclosed chat fixture, receive bounded game snapshots from the desktop companion, and turn source-bearing moments into highlights, memory, and experiment evidence.
 
 `diagnosis → hypothesis → plan → production → approval → simulated distribution → result → learning → next experiment`
 
@@ -19,7 +19,8 @@ Riff extends that loop into the live show. The audible AI cohost reads chat, rec
 - Labelled synthetic results, explicit limits, and no causal-growth claim.
 - A deterministic offline strategy director and an optional live OpenAI director returning the same validated schema.
 - A nested Python clipper service that can backfill channel memory, select callback-aware clips, render them, QC them, and write manifests consumed by Studio.
-- A Riff desktop companion and OBS overlays for live cohosting, simulated-chat rehearsal, captions, and selected-window game context.
+- A real temporary Audience Room: QR join, nickname or anonymous participation, rate limits, bounded safety rejection, presenter pause/hide/spotlight/close controls, and an exact-comment OBS callout.
+- A Riff desktop companion and OBS overlays for live cohosting, audience-grounded interventions, captions, and selected-window game context.
 - A visible reset control for repeatable judge runs.
 - Public HTTP, browser, production-mode, accessibility, and mobile-overflow tests.
 
@@ -58,6 +59,28 @@ npm run companion:dev
 ```
 
 The companion opens the local web service and lets the streamer select the game window Riff may inspect. OBS can capture the transparent overlay at [http://127.0.0.1:3100/overlay/riff](http://127.0.0.1:3100/overlay/riff). The deterministic rehearsal path remains available when a repeatable demo is more important than a live provider call; see [the Riff and OBS rehearsal guide](docs/submission/OBS_REHEARSAL.md).
+
+### Live Audience Room
+
+Open the desktop companion and select **Create audience room**. The presenter receives a room code, scannable QR, live feed, pause/resume, hide, spotlight, and close controls. Attendees join without an account at `/room/<CODE>`. The stable OBS route automatically follows the newest room, so a spotlighted comment appears without changing the browser-source URL.
+
+For phones outside the demo laptop, expose the same local Next.js process through an HTTPS tunnel or run it on one public single-process host, then set:
+
+```text
+AFTERPLAY_PUBLIC_BASE_URL=https://your-public-host.example
+```
+
+The QR uses that origin. The public URL must route back to the same process as the presenter because room state is currently in memory. No public host or tunnel is bundled or deployed by this repository; without one, the room is only a local browser proof.
+
+The live audience director is separately opt-in:
+
+```text
+AFTERPLAY_ENABLE_LIVE_AUDIENCE_AI=true
+AFTERPLAY_AUDIENCE_MODEL=gpt-5.6-sol
+OPENAI_API_KEY=your_server_only_key
+```
+
+When enabled, only validated message IDs may ground a spotlight or synthesis. Failure is visible and never replaced with fixture judgment. The deterministic audience director remains available through the API for repeatable tests; the companion itself requests live judgment only.
 
 For callback clip review, run the Python clipper from `services/video-clipper` first,
 then refresh Studio. The web app intentionally reads the latest local manifest; it does
@@ -105,6 +128,8 @@ npm run start
 | `demo` | deterministic fixture director; simulated distribution | none | repeatable, offline, no external calls |
 | `live` | OpenAI strategy director | `AFTERPLAY_ENABLE_LIVE_AI=true` + `OPENAI_API_KEY` | real strategy output or visible error — never fixture output |
 | `riff-live` | OpenAI Realtime cohost + selected-window snapshots | `OPENAI_API_KEY` + microphone/screen permission | live audio/image context or visible failure — never synthetic fallback |
+| `audience-demo` | deterministic spotlight/synthesis/silence fixture | none | repeatable grounded decision; visibly a fixture at the API boundary |
+| `audience-live` | OpenAI audience director feeding Riff Realtime | `AFTERPLAY_ENABLE_LIVE_AUDIENCE_AI=true` + `OPENAI_API_KEY` | source-ID-grounded decision or visible error — never fixture fallback |
 | `clipper` | real ingestion, memory, callback scoring, render | `OPENAI_API_KEY` + `AFTERPLAY_CLIPPER_MODEL` | genuine per-input computed clips |
 
 State plainly that demo-mode strategy is a fixture while clipper output is real.
@@ -168,6 +193,8 @@ The E2E suite verifies:
 - approval, stale-revision, idempotency, and distribution guards;
 - the complete browser loop and its learned HQ state;
 - deterministic/live strategy adapter boundaries;
+- real audience join/send/moderation/expiry-shaped lifecycle, grounded decisions, and the stable OBS spotlight;
+- the public Realtime browser boundary from a grounded audience decision to a bounded Riff response;
 - WCAG A/AA automated checks and 390px horizontal overflow;
 - visible demo reset.
 
@@ -188,6 +215,8 @@ The prototype uses seeded in-process state. It is ideal for a deterministic sing
 - The generated images are project-owned fixtures and are disclosed with hashes and prompts.
 - Distribution creates local sample receipts only.
 - The prototype does not perform real OAuth, publishing, outreach, spending, or account mutation.
+- Audience Room HTTP traffic is real, but public hosting, durable storage, platform-chat ingestion, and broad production moderation are not claimed.
+- The built-in text rejection is a small deterministic safety floor, not comprehensive moderation.
 - One sample run does not prove causality or guarantee creator growth.
 - Cross-platform identity is not inferred.
 

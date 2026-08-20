@@ -28,6 +28,8 @@ export default defineConfig({
     env: {
       AFTERPLAY_CLIPPER_WORKDIR: TEST_CLIPPER_WORKDIR,
       AFTERPLAY_ENABLE_LIVE_AI: "false",
+      AFTERPLAY_ENABLE_LIVE_AUDIENCE_AI: "false",
+      AFTERPLAY_PUBLIC_BASE_URL: "https://audience.example.test",
       // Keep the intelligence store out of the real `.intel/`: its belief memory is
       // cumulative, so test pollution there compounds instead of being overwritten.
       // Pinned so the suite does not depend on which creators happen to be backfilled

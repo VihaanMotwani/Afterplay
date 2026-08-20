@@ -3,6 +3,11 @@
 import { Broadcast, Microphone, Play, Sparkle, Waveform, X } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 
+import {
+  AudienceRoomConnection,
+  AudienceRoomHost,
+} from "@/components/audience-room-host";
+
 const companionExperiment = {
   id: "exp_comeback_loop",
   name: "The Comeback Loop",
@@ -30,6 +35,7 @@ export function RiffDesktopCompanion() {
   const [capturePending, setCapturePending] = useState(false);
   const [runtime, setRuntime] = useState<CompanionRuntime>("idle");
   const [caption, setCaption] = useState<string | null>(null);
+  const [audienceConnection, setAudienceConnection] = useState<AudienceRoomConnection | null>(null);
   const gameStreamRef = useRef<MediaStream | null>(null);
   const previewRef = useRef<HTMLVideoElement | null>(null);
   const peerRef = useRef<RTCPeerConnection | null>(null);
@@ -41,6 +47,8 @@ export function RiffDesktopCompanion() {
   const lastFrameIdRef = useRef<string | null>(null);
   const frameNumberRef = useRef(0);
   const presenceQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const audienceCursorRef = useRef<{ roomCode: string; messageId: string | null } | null>(null);
+  const audienceDecisionPendingRef = useRef(false);
 
   useEffect(() => {
     document.documentElement.classList.add("companion-document");
@@ -53,6 +61,106 @@ export function RiffDesktopCompanion() {
       if (frameTimerRef.current !== null) window.clearInterval(frameTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    const channel = dataChannelRef.current;
+    if (
+      runtime !== "listening"
+      || !audienceConnection
+      || audienceConnection.room.status !== "open"
+      || !channel
+      || channel.readyState !== "open"
+      || audienceDecisionPendingRef.current
+    ) return;
+
+    const visibleMessages = audienceConnection.messages.filter((message) => message.status === "visible");
+    const latest = visibleMessages.at(-1);
+    if (!latest) return;
+    const previous = audienceCursorRef.current?.roomCode === audienceConnection.room.code
+      ? audienceCursorRef.current.messageId
+      : null;
+    if (latest.id === previous) return;
+
+    audienceDecisionPendingRef.current = true;
+    audienceCursorRef.current = { roomCode: audienceConnection.room.code, messageId: latest.id };
+    setRuntime("thinking");
+    publishPresence("active", "thinking");
+
+    void (async () => {
+      try {
+        const response = await fetch(
+          `/api/audience/rooms/${audienceConnection.room.code}/riff-decisions`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${audienceConnection.hostToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              mode: "live",
+              ...(previous ? { afterMessageId: previous } : {}),
+            }),
+          },
+        );
+        const body = await response.json();
+        if (!response.ok) {
+          throw new Error(body.error?.message ?? "Riff could not read the live audience.");
+        }
+        const decision = body.decision as {
+          kind: "spotlight" | "synthesize" | "silent";
+          utterance?: string;
+          rationale: string;
+          supportingMessageIds: string[];
+        };
+        if (decision.kind === "silent" || !decision.utterance) {
+          setRuntime("listening");
+          publishPresence("active", "listening");
+          return;
+        }
+
+        channel.send(JSON.stringify({
+          type: "response.create",
+          response: {
+            output_modalities: ["audio"],
+            max_output_tokens: 96,
+            metadata: {
+              afterplay_source: "live_audience",
+              afterplay_decision: decision.kind,
+              afterplay_message_ids: decision.supportingMessageIds.join(","),
+            },
+            input: [
+              {
+                type: "message",
+                role: "user",
+                content: [
+                  {
+                    type: "input_text",
+                    text: JSON.stringify({
+                      source: "live_audience",
+                      decision: decision.kind,
+                      supportingMessageIds: decision.supportingMessageIds,
+                      approvedUtterance: decision.utterance,
+                    }),
+                  },
+                ],
+              },
+            ],
+            instructions: [
+              "Continue as Riff in the established voice.",
+              `Say this approved, source-grounded line exactly once: ${decision.utterance}`,
+              "Do not add a new fact, username, audience claim, or game event. Then stop speaking.",
+            ].join("\n"),
+          },
+        }));
+      } catch (cause) {
+        setRuntime("listening");
+        publishPresence("active", "listening");
+        setCaptureError(cause instanceof Error ? cause.message : "Riff could not read the live audience.");
+      } finally {
+        audienceDecisionPendingRef.current = false;
+      }
+    })();
+  }, [audienceConnection, runtime]);
 
   function publishPresence(sessionId: string, state: "listening" | "thinking" | "speaking", line?: string) {
     presenceQueueRef.current = presenceQueueRef.current
@@ -278,7 +386,7 @@ export function RiffDesktopCompanion() {
       setSourcePickerOpen(false);
     } catch (cause) {
       const message = cause instanceof DOMException && cause.name === "NotAllowedError"
-        ? "Screen capture was cancelled. Choose Roblox again when you are ready."
+        ? "Screen capture was cancelled. Choose the game window again when you are ready."
         : cause instanceof Error
           ? cause.message
           : "Riff could not watch that game window.";
@@ -301,6 +409,8 @@ export function RiffDesktopCompanion() {
         <h1>Your funniest backseat driver.</h1>
         <p>Riff watches the game, hears you, and joins the stream without covering the action.</p>
       </section>
+
+      <AudienceRoomHost onConnectionChange={setAudienceConnection} />
 
       <section className="companion-source" aria-labelledby="game-source-heading">
         <div>
@@ -368,7 +478,7 @@ export function RiffDesktopCompanion() {
                   <span className="companion-picker-thumbnail" style={{ backgroundImage: `url(${source.thumbnail})` }} />
                   <strong>{source.name}</strong>
                 </button>
-              )) : <p>No capturable windows were found. Open Roblox and try again.</p>}
+              )) : <p>No capturable windows were found. Open the game and try again.</p>}
             </div>
           </section>
         </div>

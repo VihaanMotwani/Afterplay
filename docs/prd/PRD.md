@@ -1,6 +1,6 @@
 # Afterplay — Product Requirements
 
-Status: living document. Last verified against the codebase on 8 August 2026.
+Status: living document. Last verified against the codebase on 18 August 2026.
 
 Companion: [Implementation phases](./IMPLEMENTATION-PHASES.md) — what gets built when.
 
@@ -17,6 +17,8 @@ meaning depends on history** — a callback, a rivalry payoff, a failure that is
 because the audience remembers — and showing the **evidence trail** for why it was chosen.
 
 A normal clipper sees one video. Afterplay sees the channel.
+
+Riff is the live extension of that continuity system. Its first generalized participation proof is a temporary, game-agnostic Audience Room for people physically watching the stream. Platform chat is not required for this slice: attendees scan a QR, submit real comments, and Riff may spotlight one exact source, synthesize grounded consensus, or stay silent.
 
 ### Primary outcome
 
@@ -52,6 +54,9 @@ Everything below was **executed**, not inferred. Re-run anything you doubt.
 | Authority model | dispatch-before-approval 409, stale revision 409, reject-without-feedback 400, results-without-disclosure literal 400, live-AI-without-key 503 (no silent fallback), double dispatch → still 3 receipts — [E-008](./EVIDENCE.md#e-008-authority-model) |
 | Clip playback | Byte-range serving (206 / 416, byte-identical slices); real mouse click plays through to `0:24 / 0:24` — [E-009](./EVIDENCE.md#e-009-clip-media-and-playback) |
 | Test suites | Python **116 passed, 1 skipped**; Playwright production **26 passed**; build/typecheck/lint clean — [E-005](./EVIDENCE.md#e-005-test-suites) |
+| Temporary Audience Room | Public HTTP and browser tests cover random room creation, configured public join URL, no-account nickname/anonymous join, free-text send, host-only feed and controls, rate limits, bounded severe-pattern rejection, close-time pruning, and the active-room alias (`tests/e2e/audience-room.spec.ts`, `tests/e2e/audience-room-ui.spec.ts`). |
+| Grounded audience direction | Deterministic and optional live directors share a validated `spotlight` / `synthesize` / `silent` contract. Unknown source IDs and altered spotlight text are rejected; live failure is explicit with no fixture fallback (`src/ai/audience-director.ts`). |
+| Riff and OBS audience path | Browser tests prove a grounded audience decision becomes one bounded public Realtime event and that the stable OBS URL renders the exact selected comment/name (`tests/e2e/riff-desktop-companion.spec.ts`, `tests/e2e/audience-room-ui.spec.ts`). Actual provider audio and public phone ingress remain manual gates. |
 
 Evidence links resolve to dated command/output snapshots in [EVIDENCE.md](./EVIDENCE.md).
 Each entry records the command that **produced** the result, not a grep of this document.
@@ -64,6 +69,8 @@ Timings are hardware-dependent; the evidence log states the machine.
   (`src/ai/strategy.ts`).
 - Workspace, creator baseline, evidence, and the three Studio "outputs" are seeded.
 - Distribution receipts are simulated. No OAuth, no platform analytics.
+- The `audience-demo` director is a deterministic pattern fixture. It is useful for contract tests, not evidence of model taste.
+- No provider-backed `audience-live` call or physical phone-to-public-host rehearsal is recorded in this document yet.
 
 ### The honest framing
 
@@ -119,6 +126,7 @@ demo. `P1` = required for the product claim. `P2` = production maturity.
 | **G1** | **Deck and demo video do not exist** | `docs/submission/REQUIREMENTS.md` has both unchecked. No PDF in the repo. **Two of three required deliverables.** |
 | ~~G2~~ | **CLOSED** — backfill proven on real VODs | ASR fallback, `--local`, and actionable `faster-whisper` errors, validated by six real backfills across two creators with zero failures — [E-017](./EVIDENCE.md#e-017-real-creator-thread-extraction). |
 | **G5** | Documented judge path must stay live-first | README now leads with `backfill` → `run --memory` → Studio manifest review; keep this live path ahead of the fixture loop. |
+| **G24** | Physical Audience Room ingress not yet rehearsed | The QR can use `AFTERPLAY_PUBLIC_BASE_URL`, but no tunnel/public host and external phone run is bundled or recorded. The URL must route to the same in-memory process as the presenter. |
 | ~~G6~~ | **CLOSED** — real creator data sourced, callbacks found and rendered | KSI/Sidemen and iShowSpeed backfilled from real auto-captions (no generic threads); 3 genuine cross-video callbacks found; the hero rendered end to end as a playable 1080x1920 clip with its citation — [E-017](./EVIDENCE.md#e-017-real-creator-thread-extraction), [E-018](./EVIDENCE.md#e-018-cross-video-callback-on-real-data), [E-015](./EVIDENCE.md#e-015-hero-callback-rendered). |
 
 ### P1 — open
@@ -134,6 +142,8 @@ demo. `P1` = required for the product claim. `P2` = production maturity.
 | **G13** | Mode expectations undocumented | No table telling a judge what `demo` guarantees vs what `live` requires — the root of "is this real or fake?" |
 | **G14** | Model config drift — **local `.env` only** | Repo files already agree: `.env.example` and `docs/AI.md:30` both say `gpt-5.6-sol`. The drift exists only in the developer's gitignored `.env` (`gpt-4o-mini`). Action is a one-line note plus each developer updating their own `.env`. |
 | **G15** | `tasks/todo.md` is historical | Contains duplicated, contradictory, and superseded sections; reads as notes, not status |
+| **G25** | Live audience judgment not provider-validated | The Responses adapter is schema- and grounding-validated and fails closed, but taste, latency, safety quality, and spoken delivery have not been run live on the demo machine. |
+| **G26** | Audience interventions stop before continuity | Audience-selected Realtime turns are not yet promoted into the source-bearing highlight/memory/experiment debrief. Do not claim that handoff during the demo. |
 
 ### P2 — open
 
@@ -146,6 +156,7 @@ demo. `P1` = required for the product claim. `P2` = production maturity.
 | ~~G20~~ | **CLOSED** — a dead run cannot masquerade as current | A render killed mid-run leaves `status: started` and no manifest; the app serves the last complete run and says so. Fault-injected, and it exposed a real defect: stale and degraded were chained, so one hid the other — [E-026](./EVIDENCE.md#e-026-fault-injection-degraded-and-stale). |
 | **G21** | Not durable | Seeded in-process state; not multi-instance or multi-tenant |
 | **G22** | Media route has no caching semantics | `no-store`, no ETag/Last-Modified |
+| **G27** | Audience Room is demo-grade infrastructure | State/tokens are in one process; the safety filter is a narrow severe-pattern floor; there is no durable store, multi-instance coordination, production abuse defense, or platform moderation integration. |
 | ~~G23~~ | **CLOSED** — ASR proven on real caption-less gameplay | 15 minutes of KSI gameplay audio with captions withheld: 2427 words at lang confidence 0.97, yielding **5 concrete named threads**, not generic ones. The missing-dependency path names the fix rather than falling through to "requires captions" — [E-025](./EVIDENCE.md#e-025-asr-backfill-on-a-caption-less-source). |
 
 ### Corrections to prior assessments
@@ -222,11 +233,20 @@ The creator must be able to change a cut, not only approve or reject it.
 No silent fallback. Missing credentials, dead model ids, and failed jobs must surface
 visibly rather than producing a successful-looking empty result (G19).
 
+### R9 — Real audience participation before platform chat
+
+The primary physical-room demo must accept real attendee HTTP input through a phone-reachable QR, give the presenter immediate pause/hide/spotlight/close controls, and keep the game choice outside the room/director contract. Twitch or YouTube ingestion is a later adapter, not a precondition for validating the interaction.
+
+### R10 — Audience provenance and ephemerality
+
+A Riff spotlight must preserve the exact supplied comment and source ID; synthesis must cite at least two supplied messages; silence is valid. Ordinary room messages must not silently become long-term viewer memory. Closing a room retains only comments explicitly spotlighted during the show.
+
 ---
 
 ## 5. Non-goals
 
-- Real-time / in-stream processing. Afterplay is post-stream by design.
+- Direct Twitch/YouTube chat ingestion in the first Audience Room slice.
+- A general livestreaming or moderation platform. OBS remains the broadcaster, and the presenter remains the authority.
 - A general video editor. Editing is scoped to adjusting generated cuts.
 - Autonomous publishing. Publishing always requires explicit creator approval.
 - Cross-platform person-level identity. Explicitly disclaimed.

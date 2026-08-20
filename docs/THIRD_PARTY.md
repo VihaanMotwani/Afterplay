@@ -1,6 +1,6 @@
 # Third-party and synthetic asset disclosure
 
-Last updated: 2026-08-07
+Last updated: 2026-08-18
 
 This ledger must be updated whenever a library, model, API, dataset, media source, font, or generated asset enters the repository.
 
@@ -26,6 +26,7 @@ Versions below are resolved by `package-lock.json` on 5 August 2026.
 | OpenAI JavaScript SDK | 7.4.0 | Apache-2.0 | Optional server-only live strategy director. |
 | Zod | 4.4.3 | MIT | Public request, model output, and domain-boundary validation. |
 | Phosphor React icons | 2.1.10 | MIT | Product iconography. |
+| qrcode | 1.5.4 | MIT | Client-side data-URL QR generation for temporary Audience Room joins. |
 | Manrope variable font | 5.3.0 | OFL-1.1 | Self-hosted product typography. |
 | Playwright Test | 1.62.1 | Apache-2.0 | Browser, HTTP, and production-mode contracts. |
 | axe-core Playwright | 4.12.1 | MPL-2.0 | Automated WCAG A/AA checks. |
@@ -60,6 +61,7 @@ environment.
 | `text-embedding-3-small` | OpenAI | Semantic retrieval over stored creator threads. | Called only when callback memory is enabled. |
 | `AFTERPLAY_CLIPPER_MODEL` | OpenAI Responses API | Thread extraction and callback/payoff judgment for the Python clipper. | Defaults to `gpt-5.6-sol`; operator-configurable. |
 | `AFTERPLAY_OPENAI_MODEL` | OpenAI Responses API | Optional web app live strategy director. | Defaults to `gpt-5.6-sol`; separate from the clipper model. |
+| `AFTERPLAY_AUDIENCE_MODEL` | OpenAI Responses API | Optional source-grounded live audience spotlight/synthesis/silence director. | Defaults through `AFTERPLAY_OPENAI_MODEL` to `gpt-5.6-sol`; explicit opt-in and no fixture fallback. |
 | YuNet face detection ONNX | OpenCV Zoo | Optional face-aware reframing when the model is downloaded. | Downloaded on demand from OpenCV's public model host; saliency fallback works without it. |
 
 ## External services

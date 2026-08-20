@@ -2,7 +2,7 @@
 
 Date: 2026-08-09
 
-Status: accepted; supersedes the dashboard-first demo emphasis in ADR 0001 and the two-stage director emphasis in ADR 0003.
+Status: accepted; supersedes the dashboard-first demo emphasis in ADR 0001 and the two-stage director emphasis in ADR 0003; amended by ADR 0005 for real audience input and one exact spotlight callout.
 
 ## Context
 

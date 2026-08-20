@@ -149,6 +149,68 @@ test("the desktop companion starts live Riff and drives the stream HUD", async (
   }).toEqual({ state: "speaking", caption: "Roblox called. It wants its tutorial back." });
 });
 
+test("a grounded audience decision becomes a bounded Riff voice response", async ({ page, request }) => {
+  await installCompanionRuntime(page);
+  await page.goto("/companion");
+  await page.getByRole("button", { name: "Create audience room" }).click();
+  const roomPanel = page.getByRole("region", { name: "Live audience room" });
+  const code = (await roomPanel.getByTestId("audience-room-code").textContent())!.trim();
+
+  const joined = await request.post(`/api/audience/rooms/${code}/participants`, {
+    data: { displayName: "Mira", anonymous: false },
+  });
+  const { participant } = await joined.json();
+  const sent = await request.post(`/api/audience/rooms/${code}/messages`, {
+    headers: { Authorization: `Bearer ${participant.token}` },
+    data: { text: "the safe route has no aura" },
+  });
+  const sourceMessage = (await sent.json()).message;
+
+  await page.route(`**/api/audience/rooms/${code}/riff-decisions`, async (route) => {
+    expect((await route.request().postDataJSON()).mode).toBe("live");
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        meta: { mode: "live", model: "test-audience-director", fallbackUsed: false },
+        decision: {
+          kind: "spotlight",
+          utterance: "Mira says the safe route has no aura. That is the room's strongest argument.",
+          rationale: "One audience comment landed as a complete setup.",
+          supportingMessageIds: [sourceMessage.id],
+          spotlight: sourceMessage,
+        },
+      }),
+    });
+  });
+
+  await page.getByRole("button", { name: "Choose game window" }).click();
+  await page.getByRole("button", { name: "Watch Roblox" }).click();
+  await page.getByRole("button", { name: "Start Riff" }).click();
+
+  await expect.poll(() => page.evaluate(() => {
+    const events = (globalThis as typeof globalThis & {
+      __riffSentEvents?: Array<{
+        type?: string;
+        response?: { instructions?: string; metadata?: Record<string, string> };
+      }>;
+    }).__riffSentEvents ?? [];
+    return events.find((event) =>
+      event.type === "response.create"
+      && event.response?.metadata?.afterplay_source === "live_audience",
+    );
+  })).toMatchObject({
+    type: "response.create",
+    response: {
+      instructions: expect.stringContaining("Mira says the safe route has no aura"),
+      metadata: {
+        afterplay_source: "live_audience",
+        afterplay_decision: "spotlight",
+        afterplay_message_ids: sourceMessage.id,
+      },
+    },
+  });
+});
+
 test("the desktop app opens the compact Riff companion instead of the Afterplay dashboard", async () => {
   const electronApp = await electron.launch({
     args: [path.join(process.cwd(), "electron/main.mjs")],

@@ -1,6 +1,6 @@
 # OBS, Roblox, and Riff rehearsal
 
-Use this runbook for the live judge demo. Riff runs in the desktop companion. OBS remains the compositor and receives one stable transparent HUD source plus Riff's application audio.
+Use this runbook for the live physical-audience demo. Riff runs in the desktop companion. OBS remains the compositor and receives one stable transparent HUD source plus Riff's application audio.
 
 ## Scene layout
 
@@ -9,13 +9,16 @@ Use this runbook for the live judge demo. Riff runs in the desktop companion. OB
 │ Roblox game capture                                  facecam │
 │                                                              │
 │                                                              │
+│                         ┌ LIVE AUDIENCE ────────────────────┐ │
+│                         │ selected comment · viewer name    │ │
+│                         └───────────────────────────────────┘ │
 │  ┌ RIFF  ▂▅▃▇▂  LISTENING ────────────────────────────────┐  │
 │  │ Live captions appear here while Riff is speaking.       │  │
 │  └─────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-The Riff nameplate and calm waveform stay visible. The waveform animates and captions expand below it while Riff speaks. Do not capture the desktop-companion control window or Afterplay dashboard in the broadcast scene.
+The Riff nameplate stays visible. Captions expand beside it while Riff speaks. At most one presenter- or Riff-selected audience comment appears at the top right. Do not capture the desktop-companion control window or Afterplay dashboard in the broadcast scene.
 
 ## One-time OBS setup
 
@@ -29,30 +32,42 @@ The Riff nameplate and calm waveform stay visible. The waveform animates and cap
 
 ## Start the companion
 
-1. Put `OPENAI_API_KEY` in `.env.local`.
+1. Expose port `3100` through one HTTPS tunnel/public origin that routes back to this same Next.js process. Put its origin and the live keys in `.env.local`:
+
+   ```text
+   AFTERPLAY_PUBLIC_BASE_URL=https://your-tunnel-host.example
+   AFTERPLAY_ENABLE_LIVE_AUDIENCE_AI=true
+   AFTERPLAY_AUDIENCE_MODEL=gpt-5.6-sol
+   OPENAI_API_KEY=...
+   ```
+
+   A deployed multi-instance/serverless host is not supported by the current in-memory room store.
 2. From the repository root, run:
 
    ```bash
    npm run companion:dev
    ```
 
-3. In the compact Riff window, click **Choose**, select **Roblox**, and confirm **Game vision active**.
-4. Click **Start Riff** and grant macOS microphone and screen-recording access if requested.
-5. Wait for **Riff is listening**. Speak once and confirm audible model speech, a speaking waveform, and captions in OBS.
-6. Balance levels: creator voice first, Riff slightly below, game beneath both.
+3. Select **Create audience room**. Scan the QR with a phone not on the laptop, join, send a harmless test comment, and confirm it reaches the presenter feed. If this fails, fix public ingress before the audience arrives.
+4. In the compact Riff window, click **Choose**, select the game window, and confirm **Game vision active**.
+5. Click **Start Riff** and grant macOS microphone and screen-recording access if requested.
+6. Wait for **Riff is listening**. Speak once and confirm audible model speech and captions in OBS.
+7. Spotlight the harmless test comment and confirm the exact text appears at the top right; hide it before the demo.
+8. Balance levels: creator voice first, Riff slightly below, game beneath both.
 
 The companion sends a resized current-game snapshot every five seconds. This is periodic image context, not continuous video. The automated suite verifies that an `input_image` event crosses the Realtime data channel; it does not prove Roblox capture quality or the model's visual interpretation on this machine.
 
 ## Judge sequence
 
-1. Start in OBS with the permanent Riff HUD already visible.
-2. Briefly show the compact companion—not the Afterplay dashboard—selecting Roblox and starting Riff.
-3. Return to OBS and play. Talk naturally about what is happening so Riff has both microphone and current-frame context.
-4. Miss a jump, pause, and answer Riff's roast. Let the exchange feel like a live cohost, not a command demo.
-5. Show that the OBS HUD changes from listening to thinking to speaking and captions the returned line.
-6. Close the live proof by explaining the existing Afterplay handoff: source-bearing show moments become highlight candidates, memory, and experiment evidence. Do not claim that spontaneous conversation has already entered that ledger.
+1. Start in OBS with the permanent Riff HUD visible and show the Audience Room QR long enough for people to join.
+2. Briefly show the compact companion—not the Afterplay dashboard—receiving real comments, selecting the game window, and starting Riff.
+3. Return to OBS and play. Talk naturally about what is happening so Riff has microphone, current-frame, and visible room context.
+4. Let the room produce a worthy comment. Riff may spotlight it, synthesize genuine agreement, or stay silent; do not promise a response to every message.
+5. When Riff selects one comment, verify its exact text/name appears in OBS while the bounded Riff response is audible.
+6. Use **Pause** if the room becomes noisy, **Hide** for an individual comment, and **Close** at the end.
+7. Close the live proof by saying that source-bearing show moments are intended to feed Afterplay's highlight, memory, and experiment loop. Do not claim the new Audience Room intervention is already written into that ledger.
 
-Simulated chat is not yet connected to the desktop companion. The older `/live` path still contains the visibly labelled scripted-chat rehearsal, but the primary desktop demo currently proves microphone, selected-game frames, live GPT Realtime audio, and the OBS HUD.
+The older `/live` path still contains the visibly labelled scripted-chat rehearsal. The primary desktop path now proves real Audience Room HTTP input and a mocked public Realtime boundary in automation; the actual OpenAI audience judgment, phone ingress, microphone/audio, and OBS composition remain manual rehearsal gates until tested together on the demo machine.
 
 ## Recovery
 
@@ -60,5 +75,8 @@ Simulated chat is not yet connected to the desktop companion. The older `/live` 
 - No microphone: enable Microphone access for Electron/Riff, then restart.
 - No Riff audio: confirm the companion is not muted and OBS captures the Riff application or desktop audio.
 - No HUD: confirm the Browser Source URL is exactly `http://127.0.0.1:3100/overlay/riff`, the local service is running on port `3100`, and refresh the source cache.
+- QR opens nothing on a phone: confirm `AFTERPLAY_PUBLIC_BASE_URL` is the HTTPS tunnel origin and that the tunnel routes to the same process/port used by the companion. Recreate the room after changing it.
+- Comment reaches the presenter but Riff does not react: confirm the room is open, Riff is listening, `AFTERPLAY_ENABLE_LIVE_AUDIENCE_AI=true`, and the provider key/network work. Live failure is intentionally not replaced by fixture output.
+- Unsafe/noisy room: pause the room first, hide individual messages, and close it if control is not immediately restored.
 - Riff does not start: use the visible error, then check the server key, network, microphone permission, and app restart.
 - Roblox changes too quickly: remember that the MVP samples every five seconds; narrate the current moment so audio and the latest frame reinforce each other.

@@ -1,6 +1,6 @@
 # Afterplay — Implementation Phases
 
-Companion to [PRD.md](./PRD.md). Gap IDs (`G1`…`G23`) refer to the PRD gap register.
+Companion to [PRD.md](./PRD.md). Gap IDs (`G1`…`G27`) refer to the PRD gap register.
 
 Phases are ordered by **dependency and risk**, not by calendar. Each phase is independently
 shippable and leaves the product in a coherent state.
@@ -17,6 +17,22 @@ shippable and leaves the product in a coherent state.
 | 4 | Editorial control | G11 | No |
 | 5 | Publishing and real performance | G12, G10 | No |
 | 6 | Production hardening | G16–G18, G21, G22 | No |
+| Live A | Physical Audience Room | G24–G27 | Local vertical implemented; public ingress, provider validation, continuity handoff, and production hardening remain open |
+
+---
+
+## Live A — Physical Audience Room
+
+**Implemented vertical:** temporary room creation; configured public join URL; nickname/anonymous phone join; free-text send; per-participant rate limit; narrow severe-pattern rejection; presenter feed/pause/hide/spotlight/close; deterministic and optional live grounded audience decisions; bounded Riff Realtime event; exact spotlight on the stable OBS source.
+
+**Remaining gates:**
+
+- G24: expose the demo process through HTTPS and run a real external phone from join through OBS.
+- G25: run the provider-backed audience director and Realtime voice together; record latency, grounding, taste, visible failure, and spoken-delivery evidence.
+- G26: promote selected audience interventions into the source-bearing highlight/memory/experiment ledger without silently retaining ordinary room messages.
+- G27: replace the single-process store and bounded pattern filter before production or large/adversarial audiences.
+
+**Acceptance:** one physical audience member scans the QR, sends a comment, the presenter can immediately control it, and a source-grounded live Riff response plus exact OBS callout completes on the demo network. Fixture judgment cannot satisfy this acceptance gate.
 
 ---
 

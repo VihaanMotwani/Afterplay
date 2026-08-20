@@ -23,6 +23,8 @@ Code owns identity, permissions, revisions, approval, action dispatch, receipts,
 | `demo` | deterministic fixture director | none | Deterministic output; no external runtime calls |
 | `live` | OpenAI strategy director | `AFTERPLAY_ENABLE_LIVE_AI=true`, `OPENAI_API_KEY` | Real strategy output or visible failure; never synthetic fallback |
 | `riff-live` | OpenAI Realtime cohost | `OPENAI_API_KEY`, microphone/screen permission | Audible cohost output or visible failure; never synthetic fallback |
+| `audience-demo` | deterministic audience director | none | Grounded fixture spotlight/synthesis/silence; no external runtime calls |
+| `audience-live` | OpenAI audience director feeding Riff Realtime | `AFTERPLAY_ENABLE_LIVE_AUDIENCE_AI=true`, `OPENAI_API_KEY` | Grounded decision or visible failure; never fixture fallback |
 | `clipper` | real callback-aware clipper service | `OPENAI_API_KEY`, `AFTERPLAY_CLIPPER_MODEL`, Python deps | Per-input computed clips and evidence trail |
 
 Callback output is a ranking boost, not a gate: when no callback is found, strongest standalone clips are still valid output. A healthy no-callback outcome is distinct from `memory.degraded: true`, which must remain a visible failure state with a reason.
@@ -53,6 +55,20 @@ Official references:
 Riff uses `gpt-realtime-2.1` over WebRTC, initialized through an authenticated server route so the standard OpenAI API key remains server-side. The companion sends microphone audio and a resized JPEG snapshot of only the selected game window every five seconds; it does not stream raw desktop video.
 
 Semantic voice activity detection controls turn-taking. Spoken lines and captions are ephemeral show output: they do not become creator memory or experiment evidence unless the application also records source-bearing show context. Application events are parsed through Zod before they can update the session, highlight, or experiment state.
+
+## Live audience director
+
+The desktop companion can read recent visible messages from one temporary Audience Room. It asks `POST /api/audience/rooms/:code/riff-decisions` for exactly one of:
+
+- `spotlight`: one exact message, display name, timestamp, and ID plus a bounded utterance;
+- `synthesize`: one bounded utterance with at least two supplied supporting message IDs;
+- `silent`: no interruption.
+
+Audience text is placed in a JSON evidence envelope and is explicitly treated as untrusted data, never instructions. The Responses API output is parsed through strict Structured Outputs, then domain validation rejects unknown IDs or a spotlight that changes the exact supplied source. Calls use `store: false`, low reasoning effort, and a hashed room-scoped safety identifier. The model defaults to `AFTERPLAY_AUDIENCE_MODEL`, then `AFTERPLAY_OPENAI_MODEL`, then `gpt-5.6-sol`.
+
+The companion only requests `live` decisions. A non-silent result becomes one short `response.create` event on the established Realtime data channel with source metadata and a 96-token ceiling. If audience live mode is missing or fails, the error remains visible and fixture output is not substituted.
+
+Automated coverage validates the contracts and mocks only the public browser Realtime/decision boundary. It does not establish provider taste, latency, safety quality, spoken delivery, or performance under a large/adversarial audience. Those remain live evaluation gates.
 
 ## Implemented live director
 

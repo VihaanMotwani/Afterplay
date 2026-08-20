@@ -20,7 +20,10 @@ Growth metrics remain experiment outcomes, not guaranteed product claims.
 - **Cohost profile**: Riff's name, natural-language personality brief, roast intensity, and talk frequency.
 - **Stream experiment**: one explicit audience or show hypothesis accepted or edited before going live.
 - **Live session**: the lifecycle connecting the accepted experiment to live turns and the post-stream debrief.
-- **Turn packet**: recent streamer speech, gameplay observation or frame reference, simulated chat messages, active experiment, and relevant memories.
+- **Audience room**: a temporary no-account room where physically present viewers can join by QR and submit free text under a nickname or anonymously.
+- **Audience message**: untrusted, rate-limited viewer text with a stable source ID, display name, timestamp, and visible/hidden/spotlighted status.
+- **Audience decision**: `spotlight`, `synthesize`, or `silent`; every non-silent result carries the exact supporting message IDs, and a spotlight preserves the exact message.
+- **Turn packet**: recent streamer speech, gameplay observation or frame reference, real Audience Room messages or a disclosed fixture, active experiment, and relevant memories.
 - **Cohost decision**: either `speak` or `silent`; a spoken decision includes the line, timing rationale, and supporting context.
 - **Creator memory**: creator preferences, recurring bits, boundaries, promises, and show history.
 - **Viewer memory**: a public on-stream contribution tied to a username, such as a joke, challenge, promise, or outcome. Sensitive personal profiling is excluded.
@@ -38,6 +41,8 @@ Growth metrics remain experiment outcomes, not guaranteed product claims.
 7. Simulated chat, deterministic model output, and sample data are labelled at the point of use.
 8. Live AI failure remains visible failure; the product never silently replaces it with fixture output.
 9. The demo must prove one continuous lifecycle rather than a collection of dashboard screens.
+10. Closing an Audience Room discards its ordinary feed; only comments explicitly spotlighted during the show remain in the local archive.
+11. Real Audience Room participation does not imply Twitch, YouTube, or other platform-chat ingestion.
 
 ## Canonical statement
 

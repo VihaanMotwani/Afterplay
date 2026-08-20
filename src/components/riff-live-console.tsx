@@ -583,7 +583,7 @@ export function RiffLiveConsole() {
 
           {error && <p className="riff-error" role="alert">{error}</p>}
           <div className="riff-checkin-action">
-            <p>OBS handles Roblox, facecam, microphone, and the final stream scene.</p>
+            <p>OBS handles the selected game, facecam, microphone, and the final stream scene.</p>
             <button className="riff-primary" type="button" onClick={startSession} disabled={pending}>
               <Play weight="fill" /> {pending ? "Starting" : "Start Riff"}
             </button>

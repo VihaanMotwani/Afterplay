@@ -1,6 +1,6 @@
 # Accepted public test seams
 
-Status: **accepted on 9 August 2026**
+Status: **accepted on 9 August 2026; Audience Room extension accepted on 18 August 2026**
 
 The user approved these seams before implementation. Tests verify public behavior rather than private component or repository structure.
 
@@ -13,7 +13,7 @@ Verify through accessible, visible behavior:
 - Live mode visibly progresses through connecting, ready, hearing, thinking, speaking, and failure states based on public Realtime events.
 - A spontaneous microphone reply remains audible and captioned without fabricating a source-backed experiment turn.
 - The live control surface labels gameplay/chat/AI truth status and exposes mute/end controls.
-- Normal scrolling chat and Riff captions can be shown without an avatar or special chat callouts.
+- The primary live path can show one presenter/Riff-selected exact audience callout without an avatar or a scrolling-chat takeover.
 - One fail setup and one multi-message audience request produce materially different cohost responses.
 - Ending a stream reveals memories, highlight candidates, experiment evidence, and a next experiment or callback.
 - Electron opens a compact companion instead of the Afterplay dashboard and exposes only a narrow context-isolated preload bridge.
@@ -47,11 +47,25 @@ Verify at the replaceable runtime boundary:
 Verify in a browser:
 
 - one stable transparent route resolves the active session and keeps Riff's nameplate/waveform visible while captions and state change;
-- a separate transparent route exposes the normal simulated chat feed;
+- the same stable route follows the active Audience Room and exposes at most one exact spotlighted comment;
+- a separate transparent route retains the disclosed simulated-chat rehearsal feed;
 - the overlay remains legible at the target OBS canvas size;
-- no dashboard chrome, animated avatar, or special chat-message callout appears.
+- no dashboard chrome or animated avatar appears.
 
-Automated tests prove the Electron shell, capture selection contract, image-event emission, and overlay state. Actual Roblox pixels, OS permissions, model interpretation, microphone playback, Riff audio routing, and the OBS scene remain manual rehearsal gates because browser mocks cannot prove the local device graph.
+## Seam 5: Real Audience Room
+
+Verify through public HTTP and accessible browser behavior:
+
+- the presenter creates a temporary room and receives a random code, private host token, public participant path, and configured public URL;
+- an attendee joins by nickname or anonymously without an account and sends free text from the phone surface;
+- unsafe severe-pattern text is rejected before entering the presenter/Riff feed, and one participant cannot exceed three messages per ten seconds;
+- only the presenter can inspect the feed, pause/resume/close the room, hide noise, or spotlight an exact comment;
+- closing removes the participant list and all non-spotlighted messages;
+- the director returns `spotlight`, `synthesize`, or `silent` with only supplied message IDs, and a live failure never becomes fixture success;
+- a grounded non-silent decision crosses the public browser Realtime boundary as one bounded Riff response;
+- the stable OBS URL follows the newest room and renders the exact spotlight text and display name.
+
+Automated tests prove the Electron shell, capture selection contract, image-event emission, Audience Room lifecycle, grounded browser-to-Realtime event, and overlay state. Actual phone-to-public-internet ingress, Roblox pixels, OS permissions, live model judgment, microphone playback, Riff audio routing, and the OBS scene remain manual rehearsal gates because browser mocks cannot prove the public/device graph.
 
 ## Testing posture
 
@@ -60,4 +74,4 @@ Automated tests prove the Electron shell, capture selection contract, image-even
 - Deterministic observations, transcripts, simulated chat, model output, time, and randomness may be replaced in tests.
 - The browser WebRTC boundary may be replaced in automated tests to prove event-driven UI behavior; real microphone permission, provider latency, and audio playback remain manual gates.
 - Each capability is implemented as one red-green vertical slice.
-- Fixture chat and model mode remain visibly disclosed in every judge-facing path.
+- Fixture chat and model mode remain visibly disclosed whenever used; the physical-room path instead labels the audience live.

@@ -3,8 +3,8 @@ import { RiffCaptionOverlay } from "@/components/riff-caption-overlay";
 export default async function RiffOverlayPage({
   searchParams,
 }: {
-  searchParams: Promise<{ session?: string }>;
+  searchParams: Promise<{ session?: string; room?: string }>;
 }) {
-  const { session } = await searchParams;
-  return <RiffCaptionOverlay sessionId={session ?? "active"} />;
+  const { room, session } = await searchParams;
+  return <RiffCaptionOverlay roomCode={room ?? "active"} sessionId={session ?? "active"} />;
 }
