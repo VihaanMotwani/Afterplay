@@ -19,7 +19,7 @@ Riff extends that loop into the live show. The audible AI cohost can read a real
 - Labelled synthetic results, explicit limits, and no causal-growth claim.
 - A deterministic offline strategy director and an optional live OpenAI director returning the same validated schema.
 - A nested Python clipper service that can backfill channel memory, select callback-aware clips, render them, QC them, and write manifests consumed by Studio.
-- A real temporary Audience Room: QR join, nickname or anonymous participation, rate limits, bounded safety rejection, presenter pause/hide/spotlight/close controls, and an exact-comment OBS callout.
+- A real temporary Audience Room: QR join, nickname or anonymous participation, rate limits, bounded safety rejection, presenter join-screen/pause/hide/spotlight/close controls, automatic compact OBS chat, and an exact-comment spotlight.
 - A Riff desktop companion and OBS overlays for live cohosting, audience-grounded interventions, captions, and selected-window game context.
 - A visible reset control for repeatable judge runs.
 - Public HTTP, browser, production-mode, accessibility, and mobile-overflow tests.
@@ -62,7 +62,7 @@ The companion opens the local web service and lets the streamer select the game 
 
 ### Live Audience Room
 
-Open the desktop companion and select **Create audience room**. The presenter receives a room code, scannable QR, live feed, pause/resume, hide, spotlight, and close controls. Attendees join without an account at `/room/<CODE>`. The stable OBS route automatically follows the newest room, so a spotlighted comment appears without changing the browser-source URL.
+Open the desktop companion and select **Create audience room**. The presenter receives a room code, scannable QR, live feed, Show/Hide join-screen control, pause/resume, hide, spotlight, and close controls. Attendees join without an account at `/room/<CODE>`. The stable OBS route automatically follows the newest room: the newest four visible comments appear for roughly 20 seconds, a spotlight temporarily takes priority, and the join screen can be shown without changing the Browser Source URL.
 
 For phones outside the demo laptop, expose the same local Next.js process through an HTTPS tunnel or run it on one public single-process host, then set:
 
@@ -193,7 +193,7 @@ The E2E suite verifies:
 - approval, stale-revision, idempotency, and distribution guards;
 - the complete browser loop and its learned HQ state;
 - deterministic/live strategy adapter boundaries;
-- real audience join/send/moderation/expiry-shaped lifecycle, grounded decisions, and the stable OBS spotlight;
+- real audience join/send/moderation/expiry-shaped lifecycle, grounded decisions, and the stable OBS join/chat/spotlight states;
 - the public Realtime browser boundary from a grounded audience decision to a bounded Riff response;
 - WCAG A/AA automated checks and 390px horizontal overflow;
 - visible demo reset.

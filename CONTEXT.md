@@ -43,6 +43,7 @@ Growth metrics remain experiment outcomes, not guaranteed product claims.
 9. The demo must prove one continuous lifecycle rather than a collection of dashboard screens.
 10. Closing an Audience Room discards its ordinary feed; only comments explicitly spotlighted during the show remain in the local archive.
 11. Real Audience Room participation does not imply Twitch, YouTube, or other platform-chat ingestion.
+12. Visible Audience Room messages may enter the OBS chat stack automatically after the demo safety floor; the presenter can pause the room or hide a message immediately, and spotlighted comments temporarily replace the stack.
 
 ## Canonical statement
 

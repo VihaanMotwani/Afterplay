@@ -28,6 +28,7 @@ type HostRoom = {
   code: string;
   title: string;
   status: "open" | "paused" | "closed";
+  joinScreenVisible: boolean;
   participantCount: number;
   messageCount: number;
   participantPath: string;
@@ -73,7 +74,7 @@ export function AudienceRoomHost({
         const body = await response.json();
         if (!response.ok) throw new Error(body.error?.message ?? "The audience feed could not refresh.");
         if (!cancelled) {
-          setRoom(body.room);
+          setRoom((current) => current ? { ...current, ...body.room } : body.room);
           setMessages(body.messages);
           setError(null);
         }
@@ -141,6 +142,29 @@ export function AudienceRoomHost({
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The audience room could not update.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function setJoinScreenVisible(joinScreenVisible: boolean) {
+    if (!room || !hostToken) return;
+    setPending(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/audience/rooms/${room.code}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${hostToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ joinScreenVisible }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error?.message ?? "The join screen could not update.");
+      setRoom((current) => current ? { ...current, ...body.room } : body.room);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The join screen could not update.");
     } finally {
       setPending(false);
     }
@@ -227,6 +251,18 @@ export function AudienceRoomHost({
       </div>
 
       <div className="companion-audience-controls">
+        {room.status !== "closed" && (
+          <button
+            className="companion-audience-join-toggle"
+            type="button"
+            aria-label={room.joinScreenVisible ? "Hide join screen" : "Show join screen"}
+            onClick={() => setJoinScreenVisible(!room.joinScreenVisible)}
+            disabled={pending}
+          >
+            {room.joinScreenVisible ? <EyeSlash weight="fill" /> : <Eye weight="fill" />}
+            {room.joinScreenVisible ? "Hide join screen" : "Show join screen"}
+          </button>
+        )}
         {room.status !== "closed" && (
           <button
             type="button"

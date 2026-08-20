@@ -1,6 +1,6 @@
 # Accepted public test seams
 
-Status: **accepted on 9 August 2026; Audience Room extension accepted on 18 August 2026**
+Status: **accepted on 9 August 2026; Audience Room extension accepted on 18 August 2026; stream-output extension accepted on 20 August 2026**
 
 The user approved these seams before implementation. Tests verify public behavior rather than private component or repository structure.
 
@@ -13,7 +13,7 @@ Verify through accessible, visible behavior:
 - Live mode visibly progresses through connecting, ready, hearing, thinking, speaking, and failure states based on public Realtime events.
 - A spontaneous microphone reply remains audible and captioned without fabricating a source-backed experiment turn.
 - The live control surface labels gameplay/chat/AI truth status and exposes mute/end controls.
-- The primary live path can show one presenter/Riff-selected exact audience callout without an avatar or a scrolling-chat takeover.
+- The primary live path can show a static Riff mascot, compact automatic audience chat, a manual QR join screen, and one presenter/Riff-selected exact audience callout without a scrolling-chat takeover.
 - One fail setup and one multi-message audience request produce materially different cohost responses.
 - Ending a stream reveals memories, highlight candidates, experiment evidence, and a next experiment or callback.
 - Electron opens a compact companion instead of the Afterplay dashboard and exposes only a narrow context-isolated preload bridge.
@@ -46,8 +46,10 @@ Verify at the replaceable runtime boundary:
 
 Verify in a browser:
 
-- one stable transparent route resolves the active session and keeps Riff's nameplate/waveform visible while captions and state change;
-- the same stable route follows the active Audience Room and exposes at most one exact spotlighted comment;
+- one stable transparent route resolves the active session and keeps Riff's static mascot/nameplate visible while captions and state change;
+- the same stable route follows the active Audience Room, automatically exposes the newest four visible comments for roughly 20 seconds, and removes a hidden comment on the next poll;
+- a new exact spotlight temporarily replaces the compact chat stack, then the stack returns;
+- the presenter can show and hide a QR join screen in that same route without changing OBS sources;
 - a separate transparent route retains the disclosed simulated-chat rehearsal feed;
 - the overlay remains legible at the target OBS canvas size;
 - no dashboard chrome or animated avatar appears.
@@ -59,11 +61,11 @@ Verify through public HTTP and accessible browser behavior:
 - the presenter creates a temporary room and receives a random code, private host token, public participant path, and configured public URL;
 - an attendee joins by nickname or anonymously without an account and sends free text from the phone surface;
 - unsafe severe-pattern text is rejected before entering the presenter/Riff feed, and one participant cannot exceed three messages per ten seconds;
-- only the presenter can inspect the feed, pause/resume/close the room, hide noise, or spotlight an exact comment;
+- only the presenter can inspect the host feed, show/hide the OBS join screen, pause/resume/close the room, hide noise, or spotlight an exact comment;
 - closing removes the participant list and all non-spotlighted messages;
 - the director returns `spotlight`, `synthesize`, or `silent` with only supplied message IDs, and a live failure never becomes fixture success;
 - a grounded non-silent decision crosses the public browser Realtime boundary as one bounded Riff response;
-- the stable OBS URL follows the newest room and renders the exact spotlight text and display name.
+- the stable OBS URL follows the newest room and renders manual join-screen state, visible compact chat, and the exact spotlight text/display name.
 
 Automated tests prove the Electron shell, capture selection contract, image-event emission, Audience Room lifecycle, grounded browser-to-Realtime event, and overlay state. Actual phone-to-public-internet ingress, Roblox pixels, OS permissions, live model judgment, microphone playback, Riff audio routing, and the OBS scene remain manual rehearsal gates because browser mocks cannot prove the public/device graph.
 

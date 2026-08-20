@@ -64,6 +64,66 @@ test("the stable active alias follows the newest audience room", async ({ reques
   });
 });
 
+test("the public stream contract exposes the manual join screen and only visible chat", async ({
+  request,
+}) => {
+  const created = await request.post("/api/audience/rooms", {
+    data: { title: "Riff live" },
+  });
+  const { room, host } = await created.json();
+  const hostHeaders = { Authorization: `Bearer ${host.token}` };
+
+  const initial = await request.get(`/api/audience/rooms/${room.code}`);
+  expect(await initial.json()).toMatchObject({
+    room: {
+      joinScreenVisible: false,
+      participantUrl: room.participantUrl,
+      streamMessages: [],
+    },
+  });
+
+  const shown = await request.patch(`/api/audience/rooms/${room.code}`, {
+    headers: hostHeaders,
+    data: { joinScreenVisible: true },
+  });
+  expect(shown.ok()).toBe(true);
+  expect(await shown.json()).toMatchObject({ room: { joinScreenVisible: true } });
+
+  const joined = await request.post(`/api/audience/rooms/${room.code}/participants`, {
+    data: { displayName: "Mira", anonymous: false },
+  });
+  const { participant } = await joined.json();
+  const sent = await request.post(`/api/audience/rooms/${room.code}/messages`, {
+    headers: { Authorization: `Bearer ${participant.token}` },
+    data: { text: "chat should reach the stream" },
+  });
+  const { message } = await sent.json();
+
+  const withMessage = await request.get(`/api/audience/rooms/${room.code}`);
+  expect(await withMessage.json()).toMatchObject({
+    room: {
+      joinScreenVisible: true,
+      streamMessages: [
+        {
+          id: message.id,
+          displayName: "Mira",
+          text: "chat should reach the stream",
+          createdAt: message.createdAt,
+        },
+      ],
+    },
+  });
+
+  await request.patch(`/api/audience/rooms/${room.code}/messages/${message.id}`, {
+    headers: hostHeaders,
+    data: { status: "hidden" },
+  });
+  const hidden = await request.get(`/api/audience/rooms/${room.code}`);
+  expect(await hidden.json()).toMatchObject({
+    room: { streamMessages: [] },
+  });
+});
+
 test("an attendee joins without an account and their real comment reaches the presenter feed", async ({
   request,
 }) => {

@@ -22,7 +22,7 @@ Show one Afterplay-proposed stream experiment. The creator accepts or edits it, 
 
 Start the live session. This must feel like a check-in, not dashboard administration.
 
-Open the Audience Room in the companion and let the physical audience scan the QR. State plainly that it is a temporary room, not Twitch chat.
+Open the Audience Room in the companion, click **Show join screen**, and keep the OBS output visible while the physical audience scans the QR. State plainly that it is a temporary room, not Twitch chat. Click **Hide join screen** before play resumes.
 
 ## 1:05-3:15 — The live proof
 
@@ -32,8 +32,9 @@ Switch attention to the OBS-composed stream:
 - small facecam;
 - real audience comments arriving from phones;
 - Riff audible to the creator and audience;
-- sparse Riff captions, with no animated avatar;
-- at most one exact selected audience comment at the top right.
+- a static Riff mascot with sparse captions;
+- the newest four comments in a compact upper-right stack for roughly 20 seconds;
+- at most one exact selected audience comment temporarily taking priority over that stack.
 
 The audience interaction should create one clear live proof:
 

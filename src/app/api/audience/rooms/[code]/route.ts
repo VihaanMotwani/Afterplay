@@ -6,6 +6,7 @@ import {
   updateAudienceRoom,
   updateAudienceRoomSchema,
 } from "@/domain/audience-room";
+import { audienceParticipantUrl } from "@/domain/audience-room-url";
 
 function bearerToken(request: Request) {
   const authorization = request.headers.get("authorization");
@@ -13,12 +14,18 @@ function bearerToken(request: Request) {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ code: string }> },
 ) {
   try {
     const { code } = await context.params;
-    return NextResponse.json({ room: getAudienceRoom(code) });
+    const room = getAudienceRoom(code);
+    return NextResponse.json({
+      room: {
+        ...room,
+        participantUrl: audienceParticipantUrl(request.url, room.participantPath),
+      },
+    });
   } catch (error) {
     return audienceRoomErrorResponse(error);
   }

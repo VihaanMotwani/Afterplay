@@ -1,6 +1,6 @@
 # Afterplay — Product Requirements
 
-Status: living document. Last verified against the codebase on 18 August 2026.
+Status: living document. Last verified against the codebase on 20 August 2026.
 
 Companion: [Implementation phases](./IMPLEMENTATION-PHASES.md) — what gets built when.
 
@@ -54,9 +54,9 @@ Everything below was **executed**, not inferred. Re-run anything you doubt.
 | Authority model | dispatch-before-approval 409, stale revision 409, reject-without-feedback 400, results-without-disclosure literal 400, live-AI-without-key 503 (no silent fallback), double dispatch → still 3 receipts — [E-008](./EVIDENCE.md#e-008-authority-model) |
 | Clip playback | Byte-range serving (206 / 416, byte-identical slices); real mouse click plays through to `0:24 / 0:24` — [E-009](./EVIDENCE.md#e-009-clip-media-and-playback) |
 | Test suites | Python **116 passed, 1 skipped**; Playwright production **26 passed**; build/typecheck/lint clean — [E-005](./EVIDENCE.md#e-005-test-suites) |
-| Temporary Audience Room | Public HTTP and browser tests cover random room creation, configured public join URL, no-account nickname/anonymous join, free-text send, host-only feed and controls, rate limits, bounded severe-pattern rejection, close-time pruning, and the active-room alias (`tests/e2e/audience-room.spec.ts`, `tests/e2e/audience-room-ui.spec.ts`). |
+| Temporary Audience Room | Public HTTP and browser tests cover random room creation, configured public join URL, no-account nickname/anonymous join, free-text send, host-only feed and controls, manual join-screen state, public visible-chat state, rate limits, bounded severe-pattern rejection, close-time pruning, and the active-room alias (`tests/e2e/audience-room.spec.ts`, `tests/e2e/audience-room-ui.spec.ts`). |
 | Grounded audience direction | Deterministic and optional live directors share a validated `spotlight` / `synthesize` / `silent` contract. Unknown source IDs and altered spotlight text are rejected; live failure is explicit with no fixture fallback (`src/ai/audience-director.ts`). |
-| Riff and OBS audience path | Browser tests prove a grounded audience decision becomes one bounded public Realtime event and that the stable OBS URL renders the exact selected comment/name (`tests/e2e/riff-desktop-companion.spec.ts`, `tests/e2e/audience-room-ui.spec.ts`). Actual provider audio and public phone ingress remain manual gates. |
+| Riff and OBS audience path | Browser tests prove the stable OBS URL renders the static mascot, newest four real visible comments, manual QR join screen, transient exact spotlight priority, and immediate Hide removal. A grounded audience decision becomes one bounded public Realtime event (`tests/e2e/riff-desktop-companion.spec.ts`, `tests/e2e/audience-room-ui.spec.ts`). Actual provider audio and public phone ingress remain manual gates. |
 
 Evidence links resolve to dated command/output snapshots in [EVIDENCE.md](./EVIDENCE.md).
 Each entry records the command that **produced** the result, not a grep of this document.
@@ -240,6 +240,10 @@ The primary physical-room demo must accept real attendee HTTP input through a ph
 ### R10 — Audience provenance and ephemerality
 
 A Riff spotlight must preserve the exact supplied comment and source ID; synthesis must cite at least two supplied messages; silence is valid. Ordinary room messages must not silently become long-term viewer memory. Closing a room retains only comments explicitly spotlighted during the show.
+
+### R11 — Broadcast-visible participation with presenter control
+
+The newest four visible Audience Room messages must enter the stable OBS overlay automatically for roughly 20 seconds. A presenter/Riff spotlight temporarily takes priority without altering its source text or name. The companion must manually show/hide the QR join screen, Pause must stop new input, and Hide must remove an individual comment from the public stream response.
 
 ---
 

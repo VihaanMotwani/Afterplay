@@ -28,9 +28,15 @@ export const createAudienceMessageSchema = z.object({
   text: z.string().trim().min(1).max(280),
 });
 
-export const updateAudienceRoomSchema = z.object({
-  status: z.enum(["open", "paused", "closed"]),
-});
+export const updateAudienceRoomSchema = z
+  .object({
+    status: z.enum(["open", "paused", "closed"]).optional(),
+    joinScreenVisible: z.boolean().optional(),
+  })
+  .refine(
+    (input) => input.status !== undefined || input.joinScreenVisible !== undefined,
+    { message: "Choose a room status or join-screen visibility to update." },
+  );
 
 export const updateAudienceMessageSchema = z.object({
   status: z.enum(["hidden", "spotlighted"]),
@@ -42,12 +48,19 @@ export type PublicAudienceRoom = {
   code: string;
   title: string;
   status: AudienceRoomStatus;
+  joinScreenVisible: boolean;
   participantCount: number;
   messageCount: number;
   participantPath: string;
   expiresAt: string;
+  streamMessages: AudienceStreamMessage[];
   spotlight?: AudienceMessage;
 };
+
+export type AudienceStreamMessage = Pick<
+  AudienceMessage,
+  "id" | "displayName" | "text" | "createdAt"
+>;
 
 export type AudienceMessage = {
   id: string;
@@ -65,7 +78,7 @@ type AudienceParticipant = {
   recentMessageAt: number[];
 };
 
-type StoredAudienceRoom = PublicAudienceRoom & {
+type StoredAudienceRoom = Omit<PublicAudienceRoom, "spotlight" | "streamMessages"> & {
   hostToken: string;
   participants: Map<string, AudienceParticipant>;
   messages: AudienceMessage[];
@@ -94,14 +107,20 @@ function roomCode() {
 
 function publicRoom(room: StoredAudienceRoom): PublicAudienceRoom {
   const spotlight = room.messages.find((message) => message.status === "spotlighted");
+  const streamMessages = room.messages
+    .filter((message) => message.status === "visible")
+    .slice(-20)
+    .map(({ id, displayName, text, createdAt }) => ({ id, displayName, text, createdAt }));
   return {
     code: room.code,
     title: room.title,
     status: room.status,
+    joinScreenVisible: room.joinScreenVisible,
     participantCount: room.participantCount,
     messageCount: room.messageCount,
     participantPath: room.participantPath,
     expiresAt: room.expiresAt,
+    streamMessages,
     ...(spotlight ? { spotlight: { ...spotlight } } : {}),
   };
 }
@@ -159,6 +178,7 @@ export function createAudienceRoom(input: z.infer<typeof createAudienceRoomSchem
     code,
     title: input.title,
     status: "open",
+    joinScreenVisible: false,
     participantCount: 0,
     messageCount: 0,
     participantPath: `/room/${code}`,
@@ -286,8 +306,12 @@ export function updateAudienceRoom(
   if (room.status === "closed") {
     throw new AudienceRoomError("audience_room_closed", "This audience room is closed.", 409);
   }
-  room.status = input.status;
+  if (input.status) room.status = input.status;
+  if (input.joinScreenVisible !== undefined) {
+    room.joinScreenVisible = input.joinScreenVisible;
+  }
   if (input.status === "closed") {
+    room.joinScreenVisible = false;
     const spotlightedComments = room.messages
       .filter((message) => message.status === "spotlighted")
       .map((message) => ({ ...message }));

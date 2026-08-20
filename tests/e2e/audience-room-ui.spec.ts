@@ -71,6 +71,34 @@ test("the presenter creates a scannable room and moderates its live feed", async
   await expect(roomPanel.getByText("Paused", { exact: true })).toBeVisible();
 });
 
+test("the presenter manually shows and hides the audience join screen in OBS", async ({
+  page,
+  context,
+  request,
+}) => {
+  await page.goto("/companion");
+  await page.getByRole("button", { name: "Create audience room" }).click();
+
+  const roomPanel = page.getByRole("region", { name: "Live audience room" });
+  const code = (await roomPanel.getByTestId("audience-room-code").textContent())?.trim();
+  expect(code).toMatch(/^[A-Z2-9]{6}$/);
+
+  await roomPanel.getByRole("button", { name: "Show join screen" }).click();
+  await expect(roomPanel.getByRole("button", { name: "Hide join screen" })).toBeVisible();
+  const publicRoom = await request.get(`/api/audience/rooms/${code}`);
+  expect(await publicRoom.json()).toMatchObject({ room: { joinScreenVisible: true } });
+
+  const overlay = await context.newPage();
+  await overlay.goto(`/overlay/riff?room=${code}`);
+  const joinScreen = overlay.getByRole("region", { name: "Audience join screen" });
+  await expect(joinScreen).toBeVisible();
+  await expect(joinScreen.getByRole("img", { name: "Audience room QR code" })).toBeVisible();
+  await expect(joinScreen.getByText(code!, { exact: true })).toBeVisible();
+
+  await roomPanel.getByRole("button", { name: "Hide join screen" }).click();
+  await expect(joinScreen).toHaveCount(0);
+});
+
 test("the OBS overlay shows the exact spotlighted audience comment", async ({ page, request }) => {
   const created = await request.post("/api/audience/rooms", {
     data: { title: "Riff live" },
@@ -94,4 +122,88 @@ test("the OBS overlay shows the exact spotlighted audience comment", async ({ pa
   const spotlight = page.getByRole("region", { name: "Live audience spotlight" });
   await expect(spotlight.getByText("the safe route has no aura", { exact: true })).toBeVisible();
   await expect(spotlight.getByText("Mira", { exact: true })).toBeVisible();
+});
+
+test("the OBS overlay automatically shows the latest four real comments with Riff", async ({
+  page,
+  request,
+}) => {
+  const created = await request.post("/api/audience/rooms", {
+    data: { title: "Riff live" },
+  });
+  const { room } = await created.json();
+  const comments = [
+    ["Ari", "first comment should roll off"],
+    ["Bea", "take the left route"],
+    ["Cam", "the bridge is definitely bait"],
+    ["Dev", "ask Riff what it remembers"],
+    ["Em", "this is the audience-caused moment"],
+  ] as const;
+
+  for (const [displayName, text] of comments) {
+    const joined = await request.post(`/api/audience/rooms/${room.code}/participants`, {
+      data: { displayName, anonymous: false },
+    });
+    const { participant } = await joined.json();
+    const sent = await request.post(`/api/audience/rooms/${room.code}/messages`, {
+      headers: { Authorization: `Bearer ${participant.token}` },
+      data: { text },
+    });
+    expect(sent.status()).toBe(201);
+  }
+
+  await page.goto(`/overlay/riff?room=${room.code}`);
+
+  await expect(page.getByTestId("riff-mascot")).toBeVisible();
+  const chat = page.getByRole("region", { name: "Live audience chat" });
+  await expect(chat).toBeVisible();
+  await expect(chat.getByText("first comment should roll off", { exact: true })).toHaveCount(0);
+  for (const [, text] of comments.slice(1)) {
+    await expect(chat.getByText(text, { exact: true })).toBeVisible();
+  }
+});
+
+test("an exact spotlight briefly takes priority and hiding removes chat from OBS", async ({
+  page,
+  request,
+}) => {
+  const created = await request.post("/api/audience/rooms", {
+    data: { title: "Riff live" },
+  });
+  const { room, host } = await created.json();
+  const joined = await request.post(`/api/audience/rooms/${room.code}/participants`, {
+    data: { displayName: "Mira", anonymous: false },
+  });
+  const { participant } = await joined.json();
+  const participantHeaders = { Authorization: `Bearer ${participant.token}` };
+  const hostHeaders = { Authorization: `Bearer ${host.token}` };
+  const chatResponse = await request.post(`/api/audience/rooms/${room.code}/messages`, {
+    headers: participantHeaders,
+    data: { text: "keep this in compact chat" },
+  });
+  const chatMessage = (await chatResponse.json()).message;
+  const spotlightResponse = await request.post(`/api/audience/rooms/${room.code}/messages`, {
+    headers: participantHeaders,
+    data: { text: "the safe route has no aura" },
+  });
+  const spotlightMessage = (await spotlightResponse.json()).message;
+  await request.patch(`/api/audience/rooms/${room.code}/messages/${spotlightMessage.id}`, {
+    headers: hostHeaders,
+    data: { status: "spotlighted" },
+  });
+
+  await page.goto(`/overlay/riff?room=${room.code}`);
+  const spotlight = page.getByRole("region", { name: "Live audience spotlight" });
+  const chat = page.getByRole("region", { name: "Live audience chat" });
+  await expect(spotlight.getByText("the safe route has no aura", { exact: true })).toBeVisible();
+  await expect(chat).toHaveCount(0);
+
+  await expect(chat.getByText("keep this in compact chat", { exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
+  await request.patch(`/api/audience/rooms/${room.code}/messages/${chatMessage.id}`, {
+    headers: hostHeaders,
+    data: { status: "hidden" },
+  });
+  await expect(chat).toHaveCount(0);
 });
