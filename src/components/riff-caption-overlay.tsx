@@ -3,7 +3,7 @@
 import { Microphone } from "@phosphor-icons/react";
 import Image from "next/image";
 import QRCode from "qrcode";
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 
 import riffAvatar from "../../demo-video/public/riff-avatar.png";
 
@@ -37,6 +37,13 @@ type OverlayAudienceRoom = {
   participantUrl: string;
   spotlight?: AudienceSpotlight;
   streamMessages: AudienceStreamMessage[];
+  poll?: {
+    id: string;
+    prompt: string;
+    status: "open" | "locked";
+    closesAt: string;
+    options: Array<{ id: "a" | "b"; label: string; votes: number }>;
+  };
 };
 
 export function RiffCaptionOverlay({
@@ -53,6 +60,7 @@ export function RiffCaptionOverlay({
   const [joinQrCode, setJoinQrCode] = useState<{ participantUrl: string; dataUrl: string } | null>(null);
   const lastSpotlightId = useRef<string | null>(null);
   const spotlightUntil = useRef(0);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     document.documentElement.classList.add("overlay-document");
@@ -127,6 +135,11 @@ export function RiffCaptionOverlay({
   }, [roomCode]);
 
   useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     if (!audienceRoom?.joinScreenVisible) {
       return;
     }
@@ -151,6 +164,10 @@ export function RiffCaptionOverlay({
     ? presence.caption
     : null;
   const state = presence?.state ?? "listening";
+  const poll = audienceRoom?.poll;
+  const pollTotal = poll?.options.reduce((total, option) => total + option.votes, 0) ?? 0;
+  const pollSeconds = poll ? Math.max(0, Math.ceil((Date.parse(poll.closesAt) - now) / 1_000)) : 0;
+  const pollVisible = poll && (poll.status === "open" || now - Date.parse(poll.closesAt) < 5_000);
 
   return (
     <main className="riff-overlay" aria-label="Riff caption overlay">
@@ -180,6 +197,23 @@ export function RiffCaptionOverlay({
           <span>Live audience</span>
           <blockquote>{spotlight.text}</blockquote>
           <p>{spotlight.displayName}</p>
+        </section>
+      )}
+      {!audienceRoom?.joinScreenVisible && pollVisible && poll && (
+        <section className={`riff-overlay-prediction riff-overlay-prediction--${poll.status}`} aria-label="Audience prediction">
+          <header><span>Riff Director presents</span><strong>{poll.status === "open" ? `${pollSeconds}s` : "LOCKED"}</strong></header>
+          <h1>{poll.prompt}</h1>
+          <div className="riff-overlay-prediction-options">
+            {poll.options.map((option, index) => {
+              const percentage = pollTotal ? Math.round((option.votes / pollTotal) * 100) : 50;
+              return (
+                <article key={option.id} style={{ "--prediction-fill": `${percentage}%` } as CSSProperties}>
+                  <span>{index === 0 ? "A" : "B"}</span><strong>{option.label}</strong><b>{percentage}%</b>
+                </article>
+              );
+            })}
+          </div>
+          <p>{poll.status === "open" ? "Vote on your phone · prediction window live" : `${pollTotal} audience predictions locked`}</p>
         </section>
       )}
       {!audienceRoom?.joinScreenVisible && !spotlight && streamMessages.length > 0 && (

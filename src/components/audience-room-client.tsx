@@ -15,6 +15,13 @@ type PublicRoom = {
   status: "open" | "paused" | "closed";
   participantCount: number;
   spotlight?: PublicMessage;
+  poll?: {
+    id: string;
+    prompt: string;
+    status: "open" | "locked";
+    closesAt: string;
+    options: Array<{ id: "a" | "b"; label: string; votes: number }>;
+  };
 };
 
 type Participant = {
@@ -31,6 +38,7 @@ export function AudienceRoomClient({ code }: { code: string }) {
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [votedPollId, setVotedPollId] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.classList.add("audience-room-document");
@@ -103,6 +111,27 @@ export function AudienceRoomClient({ code }: { code: string }) {
       setNotice("Sent to Riff.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "That message did not reach Riff.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function vote(optionId: "a" | "b") {
+    if (!participant || !room?.poll || votedPollId === room.poll.id) return;
+    setPending(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/audience/rooms/${encodeURIComponent(code)}/poll/vote`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${participant.token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ optionId }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error?.message ?? "Your prediction did not lock.");
+      setVotedPollId(room.poll.id);
+      setNotice("Prediction locked. Watch the screen.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Your prediction did not lock.");
     } finally {
       setPending(false);
     }
@@ -211,6 +240,25 @@ export function AudienceRoomClient({ code }: { code: string }) {
               <span className="audience-room-orbit"><i /><i /><i /></span>
               <p><strong>Riff is reading the room.</strong> Strong comments may appear on the main screen and be said aloud.</p>
             </div>
+          )}
+
+          {room.poll && (
+            <section className={`audience-room-poll audience-room-poll--${room.poll.status}`} aria-label="Director prediction">
+              <header><span>Director prediction</span><small>{room.poll.status === "open" ? "Vote now" : "Locked"}</small></header>
+              <h2>{room.poll.prompt}</h2>
+              <div>
+                {room.poll.options.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    disabled={pending || room.poll?.status !== "open" || votedPollId === room.poll.id}
+                    onClick={() => vote(option.id)}
+                  >
+                    <span>{option.label}</span><strong>{option.votes}</strong>
+                  </button>
+                ))}
+              </div>
+            </section>
           )}
 
           <form className="audience-room-composer" onSubmit={sendMessage}>

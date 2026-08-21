@@ -42,6 +42,19 @@ export const updateAudienceMessageSchema = z.object({
   status: z.enum(["hidden", "spotlighted"]),
 });
 
+export const createAudiencePollSchema = z.object({
+  prompt: z.string().trim().min(1).max(120),
+  options: z.tuple([
+    z.string().trim().min(1).max(40),
+    z.string().trim().min(1).max(40),
+  ]),
+  durationSeconds: z.number().int().min(5).max(30).default(10),
+});
+
+export const voteAudiencePollSchema = z.object({
+  optionId: z.enum(["a", "b"]),
+});
+
 export type AudienceRoomStatus = "open" | "paused" | "closed";
 
 export type PublicAudienceRoom = {
@@ -55,6 +68,15 @@ export type PublicAudienceRoom = {
   expiresAt: string;
   streamMessages: AudienceStreamMessage[];
   spotlight?: AudienceMessage;
+  poll?: AudiencePoll;
+};
+
+export type AudiencePoll = {
+  id: string;
+  prompt: string;
+  options: Array<{ id: "a" | "b"; label: string; votes: number }>;
+  status: "open" | "locked";
+  closesAt: string;
 };
 
 export type AudienceStreamMessage = Pick<
@@ -82,6 +104,7 @@ type StoredAudienceRoom = Omit<PublicAudienceRoom, "spotlight" | "streamMessages
   hostToken: string;
   participants: Map<string, AudienceParticipant>;
   messages: AudienceMessage[];
+  poll?: AudiencePoll & { voterTokens: Set<string> };
 };
 
 type AudienceRoomStore = {
@@ -111,6 +134,13 @@ function publicRoom(room: StoredAudienceRoom): PublicAudienceRoom {
     .filter((message) => message.status === "visible")
     .slice(-20)
     .map(({ id, displayName, text, createdAt }) => ({ id, displayName, text, createdAt }));
+  const poll = room.poll && {
+    id: room.poll.id,
+    prompt: room.poll.prompt,
+    options: room.poll.options.map((option) => ({ ...option })),
+    status: Date.parse(room.poll.closesAt) <= Date.now() ? "locked" as const : room.poll.status,
+    closesAt: room.poll.closesAt,
+  };
   return {
     code: room.code,
     title: room.title,
@@ -122,6 +152,7 @@ function publicRoom(room: StoredAudienceRoom): PublicAudienceRoom {
     expiresAt: room.expiresAt,
     streamMessages,
     ...(spotlight ? { spotlight: { ...spotlight } } : {}),
+    ...(poll ? { poll } : {}),
   };
 }
 
@@ -346,4 +377,55 @@ export function updateAudienceMessage(
   }
   message.status = input.status;
   return { message: { ...message } };
+}
+
+export function createAudiencePoll(
+  code: string,
+  hostToken: string | undefined,
+  input: z.infer<typeof createAudiencePollSchema>,
+) {
+  const room = requireRoom(code);
+  requireHost(room, hostToken);
+  if (room.status !== "open") {
+    throw new AudienceRoomError("audience_room_unavailable", "Open the room before starting a prediction.", 409);
+  }
+  if (room.poll && Date.parse(room.poll.closesAt) > Date.now() && room.poll.status === "open") {
+    throw new AudienceRoomError("audience_poll_active", "A Director prediction is already live.", 409);
+  }
+  room.poll = {
+    id: `poll_${randomBytes(12).toString("base64url")}`,
+    prompt: input.prompt,
+    options: [
+      { id: "a", label: input.options[0], votes: 0 },
+      { id: "b", label: input.options[1], votes: 0 },
+    ],
+    status: "open",
+    closesAt: new Date(Date.now() + input.durationSeconds * 1_000).toISOString(),
+    voterTokens: new Set(),
+  };
+  return { room: publicRoom(room), poll: publicRoom(room).poll! };
+}
+
+export function voteAudiencePoll(
+  code: string,
+  participantToken: string | undefined,
+  input: z.infer<typeof voteAudiencePollSchema>,
+) {
+  const room = requireRoom(code);
+  const participant = participantToken ? room.participants.get(participantToken) : undefined;
+  if (!participant) {
+    throw new AudienceRoomError("audience_participant_forbidden", "Join this audience room before voting.", 403);
+  }
+  const poll = room.poll;
+  if (!poll || poll.status !== "open" || Date.parse(poll.closesAt) <= Date.now()) {
+    throw new AudienceRoomError("audience_poll_closed", "That prediction has already locked.", 409);
+  }
+  if (poll.voterTokens.has(participant.token)) {
+    throw new AudienceRoomError("audience_poll_already_voted", "You already locked your prediction.", 409);
+  }
+  const option = poll.options.find((candidate) => candidate.id === input.optionId);
+  if (!option) throw new AudienceRoomError("audience_poll_option_not_found", "That prediction option does not exist.", 404);
+  option.votes += 1;
+  poll.voterTokens.add(participant.token);
+  return { poll: publicRoom(room).poll! };
 }
