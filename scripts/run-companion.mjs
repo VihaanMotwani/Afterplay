@@ -7,9 +7,24 @@ const require = createRequire(import.meta.url);
 const projectDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const electronPath = require("electron");
 const nextPath = require.resolve("next/dist/bin/next");
-const hostname = "127.0.0.1";
 const port = process.env.AFTERPLAY_PORT ?? "3100";
-const baseUrl = `http://${hostname}:${port}`;
+
+/* Bind to every interface as soon as a public origin is configured.
+ *
+ * The Audience Room is joined from a phone, which reaches this machine on its LAN IP or
+ * through a tunnel. Bound to 127.0.0.1 the dev server refuses those connections outright,
+ * so the QR resolves to a host that never answers. Anyone setting
+ * AFTERPLAY_PUBLIC_BASE_URL has already said they intend the room to be reachable, so the
+ * bind follows that intent instead of needing a second terminal.
+ *
+ * Loopback stays the default: binding every interface unasked would expose a dev server
+ * carrying live API keys to the whole network. AFTERPLAY_HOST overrides either way.
+ */
+const bindHost =
+  process.env.AFTERPLAY_HOST ?? (process.env.AFTERPLAY_PUBLIC_BASE_URL?.trim() ? "0.0.0.0" : "127.0.0.1");
+/* Always talk to the server over loopback ourselves. 0.0.0.0 is a bind address, not a
+ * destination, and fetching it is unreliable on macOS. */
+const baseUrl = `http://127.0.0.1:${port}`;
 let nextProcess = null;
 let electronProcess = null;
 let stopping = false;
@@ -44,7 +59,7 @@ process.on("SIGINT", () => stop(0));
 process.on("SIGTERM", () => stop(0));
 
 if (!(await serverIsReady())) {
-  nextProcess = spawn(process.execPath, [nextPath, "dev", "--hostname", hostname, "--port", port], {
+  nextProcess = spawn(process.execPath, [nextPath, "dev", "--hostname", bindHost, "--port", port], {
     cwd: projectDirectory,
     env: process.env,
     stdio: "inherit",

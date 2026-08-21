@@ -70,7 +70,14 @@ For phones outside the demo laptop, expose the same local Next.js process throug
 AFTERPLAY_PUBLIC_BASE_URL=https://your-public-host.example
 ```
 
-The QR uses that origin. The public URL must route back to the same process as the presenter because room state is currently in memory. No public host or tunnel is bundled or deployed by this repository; without one, the room is only a local browser proof.
+The QR uses that origin. The public URL must route back to the same process as the presenter because room state is currently in memory.
+
+Setting that variable also does two things automatically: `npm run companion:dev` binds the
+dev server to every interface instead of loopback, and `next.config.ts` adds the origin to
+`allowedDevOrigins`. Both are required. Without the first the phone cannot connect at all;
+without the second Next refuses the page's client chunks as cross-origin, so the room
+renders its server HTML and then hangs forever on **Finding room** without ever erroring.
+Rooms embed the origin they were created with, so create a new room after changing it. No public host or tunnel is bundled or deployed by this repository; without one, the room is only a local browser proof.
 
 The live audience director is separately opt-in:
 
